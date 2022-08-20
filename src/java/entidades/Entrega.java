@@ -26,7 +26,7 @@ public class Entrega implements Serializable {
     private Date fec_carga;
     private int idUsuarioEntrega;
     private String nombreUsuarioEntrega;    
-    private Date fec_ent;
+    private String fec_ent;
     private int idUsuarioRecibe;
     private String nombreUsuarioRecibe;
     private Date fec_rec;
@@ -97,11 +97,11 @@ public class Entrega implements Serializable {
         this.idUsuarioEntrega = idUsuarioEntrega;
     }
 
-    public Date getFec_ent() {
+    public String getFec_ent() {
         return fec_ent;
     }
 
-    public void setFec_ent(Date fec_ent) {
+    public void setFec_ent(String fec_ent) {
         this.fec_ent = fec_ent;
     }
 

@@ -5,6 +5,7 @@
  */
 package servicios;
 
+import contabilidad.InterfazContable;
 import database.Conector;
 import entidades.Entrega;
 import entidades.EntregaDetalle;
@@ -14,9 +15,13 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.Stateless;
@@ -44,14 +49,26 @@ public class Entregas_Post extends BeanBase {
         int li_idEntrega,li_idRemito,li_idStock;
         boolean lb_resultado=false;
         
+        TimeZone gmtZone = TimeZone.getTimeZone("America/Buenos_Aires");
+        DateFormat destDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+        destDateFormat.setTimeZone(gmtZone);
+
+        Date lda_fec_ent=null;
+        try {
+            lda_fec_ent=destDateFormat.parse(entrega.getFec_ent());
+        } catch (ParseException ex) {
+            Logger.getLogger(InterfazContable.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        System.out.println("Fecha de entrega: " + lda_fec_ent);   
+        
         try {
             Conector conector = new Conector();  
             conexion = conector.connect("estancia");
             conexion.setAutoCommit(false);
             
             //Grabo la entrega
-            li_idEntrega=grabaEntrega(entrega.getIdLocal(),entrega.getIdUsuarioEntrega(),entrega.getTotalKilos(),
-                                      entrega.getValorFlete(),entrega.getObservaciones());
+            li_idEntrega=grabaEntrega(entrega.getIdLocal(),entrega.getIdUsuarioEntrega(),lda_fec_ent,
+                                      entrega.getTotalKilos(),entrega.getValorFlete(),entrega.getObservaciones());
             List<EntregaDetalle> lista= new ArrayList<EntregaDetalle>();
             if (li_idEntrega == 0 ){
                 conexion.rollback();
@@ -113,8 +130,11 @@ public class Entregas_Post extends BeanBase {
                 if (detalle.getEstado().equals("E")){
                     //Si es una fracción de la media res entonces obtengo el producto relacionado
                     int li_idProductoRel=0;
+                    System.out.println("Tipo: "+ detalle.getTipo());
+                    System.out.println("Categoría: "+ detalle.getIdCategoria());
                     if (detalle.getTipo().equals("PI") || detalle.getTipo().equals("DE") ){
                         li_idProductoRel=getProductoRelacionado(detalle.getIdCategoria(),detalle.getTipo());
+                        System.out.println("Producto rel: "+ li_idProductoRel);
                         if (li_idProductoRel==0){
                             conexion.rollback();
                             conexion.setAutoCommit(true);
@@ -138,6 +158,7 @@ public class Entregas_Post extends BeanBase {
                 }
             }
             
+            System.out.println("Vamos a grabar Mov Stock");
             //Grabo mov. de stock
             final String TIPO_COMPROBANTE_REL="R";
             li_idStock=grabaMovStock(entrega.getIdUsuarioEntrega(),li_idRemito,TIPO_COMPROBANTE_REL,entrega.getObservaciones());
@@ -187,7 +208,7 @@ public class Entregas_Post extends BeanBase {
     }
     
     //Graba la cabecera de la entrega
-    public int grabaEntrega(int idLocal,int idUsuarioEntrega,double totalKilos,double valorFlete,
+    public int grabaEntrega(int idLocal,int idUsuarioEntrega,Date fec_entrega,double totalKilos,double valorFlete,
             String observaciones) throws SQLException{
         
         CallableStatement s=null;
@@ -201,7 +222,8 @@ public class Entregas_Post extends BeanBase {
              s.setInt(1,idLocal); 
              s.setTimestamp(2,new java.sql.Timestamp(lda_fec_carga.getTime()));
              s.setInt(3,idUsuarioEntrega);
-             s.setDate(4,new java.sql.Date(lda_fec_carga.getTime()));             
+             //s.setDate(4,new java.sql.Date(lda_fec_carga.getTime()));  
+             s.setTimestamp(4,new java.sql.Timestamp(fec_entrega.getTime()));
              s.setDouble(5,totalKilos);
              s.setDouble(6,valorFlete);
              s.setString(7,observaciones);
@@ -323,10 +345,10 @@ public class Entregas_Post extends BeanBase {
              s.executeUpdate();
              
              //Obtengo el id del registro insertado
-             li_idRemito=s.getInt(8);
+             li_idRemito=s.getInt(9);
 
         }catch (SQLException e){
-            System.out.println("Error graba entrega SQL: " + e.getMessage() );
+            System.out.println("Error graba remito SQL: " + e.getMessage() );
         }catch (Exception e){
             System.out.println("Error graba remito: " + e.getMessage() );
         }finally {
@@ -343,6 +365,13 @@ public class Entregas_Post extends BeanBase {
         ResultSet r=null;
         int li_idRem=0;
         boolean lb_resultado=false;
+        
+        System.out.println("Graba remito detalle:");
+        System.out.println("Id: " + idRemito);
+        System.out.println("idGarronInventario: " + idGarronInventario);
+        System.out.println("idProducto: " + idProducto);
+        System.out.println("idUnidad: " + idUnidad);
+        System.out.println("cantidad: " + cantidad);
 
         try {        
              s=conexion.prepareCall("{call sp_graba_remito_detalle ( ? , ? , ? , ? , ? , ? )}"); 

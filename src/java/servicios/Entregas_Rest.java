@@ -16,9 +16,11 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.Stateless;
@@ -198,7 +200,13 @@ public class Entregas_Rest extends BeanBase{
                    entrega.setNombreCliente(ls_nombreCliente);
                    entrega.setIdUsuarioEntrega(li_idUsuarioEntrega);
                    entrega.setNombreUsuarioEntrega(ls_nombreUsuarioEntrega);
-                   entrega.setFec_ent(lda_fec_ent);
+                   //Convierto la fecha a string
+                   SimpleDateFormat  formato = new SimpleDateFormat("dd/MM/yyyy");
+                   TimeZone gmtZone = TimeZone.getTimeZone("America/Buenos_Aires");
+                   formato.setTimeZone(gmtZone);
+                   String fechaEntrega = formato.format(lda_fec_ent);
+                   
+                   entrega.setFec_ent(fechaEntrega);
                    entrega.setFec_rec(lda_fec_rec);
                    entrega.setIdUsuarioRecibe(li_idUsuarioRecibe);
                    entrega.setNombreUsuarioRecibe(ls_nombreUsuarioRecibe);

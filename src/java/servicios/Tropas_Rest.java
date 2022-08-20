@@ -314,7 +314,7 @@ public class Tropas_Rest extends BeanBase{
     public List<GarronDet> getListaTropaCategoriaDetalle(int idCategoria,int idTropa) throws Exception {
         CallableStatement s=null;
         ResultSet r=null;
-        int li_id,li_idGarron,li_numGarron,li_idTropa;
+        int li_id,li_idGarron,li_numGarron,li_idTropa,li_idCategoria;
         String ls_tipo="",ls_estado="",ls_categoria;
         double ld_kilos;
         int li_idProducto,li_idUnidad;
@@ -339,6 +339,7 @@ public class Tropas_Rest extends BeanBase{
                    ld_kilos=r.getDouble("kilos");
                    li_idProducto=r.getInt("idProducto");
                    li_idUnidad=r.getInt("idUnidad");
+                   li_idCategoria=r.getInt("idCategoria");
                    ls_categoria=r.getString("categoria");
                    ls_estado=r.getString("estado");
                    
@@ -348,7 +349,7 @@ public class Tropas_Rest extends BeanBase{
                    item.setIdGarron(li_idGarron);
                    item.setNumGarron(li_numGarron);
                    item.setTipo(ls_tipo);
-                   item.setIdCategoria(idCategoria);
+                   item.setIdCategoria(li_idCategoria);
                    item.setKilos(ld_kilos);
                    item.setIdProducto(li_idProducto);
                    item.setIdUnidad(li_idUnidad);
